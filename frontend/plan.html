@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kế hoạch Sản xuất</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; }
+
+  nav {
+    background: #1a237e; color: #fff;
+    display: flex; align-items: center; padding: 0 24px; height: 52px; gap: 4px;
+  }
+  nav h1 { font-size: 15px; font-weight: 700; flex: 1; }
+  nav a {
+    color: #fff; text-decoration: none; padding: 14px 16px;
+    font-size: 13px; opacity: 0.75; font-weight: 500; transition: opacity .2s; white-space: nowrap;
+  }
+  nav a:hover { opacity: 1; }
+  nav a.active { opacity: 1; border-bottom: 3px solid #82b1ff; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #fff; border-radius: 10px; padding: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .tab-btn {
+    flex: 1; padding: 10px; border: none; border-radius: 7px; cursor: pointer;
+    font-size: 13px; font-weight: 600; background: none; color: #888; transition: all .2s;
+  }
+  .tab-btn.active { background: #1a237e; color: #fff; }
+  .tab-btn:hover:not(.active) { background: #e8eaf6; color: #1a237e; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CARD */
+  .card { background: #fff; border-radius: 10px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #e8eaf6; }
+  .card-header h2 { font-size: 15px; font-weight: 700; color: #1a237e; }
+
+  /* FORM INLINE */
+  .inline-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: #f8f9ff; border-radius: 8px; padding: 16px; margin-bottom: 18px; border: 1px solid #e8eaf6; }
+  .inline-form .fg { display: flex; flex-direction: column; gap: 5px; }
+  .inline-form label { font-size: 12px; font-weight: 600; color: #555; }
+  .inline-form input, .inline-form select {
+    border: 1.5px solid #ddd; border-radius: 7px; padding: 8px 11px;
+    font-size: 13px; outline: none; background: #fff; min-width: 130px;
+  }
+  .inline-form input:focus, .inline-form select:focus { border-color: #3949ab; }
+
+  /* BUTTONS */
+  .btn { padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; }
+  .btn-primary { background: #1a237e; color: #fff; }
+  .btn-primary:hover { background: #3949ab; }
+  .btn-success { background: #2e7d32; color: #fff; }
+  .btn-success:hover { background: #388e3c; }
+  .btn-warning { background: #f57f17; color: #fff; }
+  .btn-warning:hover { background: #f9a825; }
+  .btn-danger { background: none; border: none; color: #c62828; cursor: pointer; font-size: 16px; padding: 3px 8px; border-radius: 4px; }
+  .btn-danger:hover { background: #ffebee; }
+  .btn-edit { background: none; border: none; color: #1565c0; cursor: pointer; font-size: 15px; padding: 3px 8px; border-radius: 4px; }
+  .btn-edit:hover { background: #e3f2fd; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; font-weight: 700; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-active { background: #e8f5e9; color: #2e7d32; }
+  .badge-inactive { background: #fafafa; color: #999; border: 1px solid #eee; }
+  .badge-buyer { background: #e8eaf6; color: #3949ab; }
+
+  /* ALERT */
+  .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .alert.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .alert.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+
+  /* MODAL */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 100; align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px; padding: 28px; width: 460px; max-width: 95vw;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  }
+  .modal h3 { font-size: 15px; font-weight: 700; color: #1a237e; margin-bottom: 20px; }
+  .modal .fg { margin-bottom: 14px; }
+  .modal label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
+  .modal input, .modal select {
+    width: 100%; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 12px;
+    font-size: 14px; outline: none;
+  }
+  .modal input:focus, .modal select:focus { border-color: #3949ab; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* IMPORT */
+  .import-zone {
+    border: 2px dashed #c5cae9; border-radius: 10px; padding: 40px; text-align: center;
+    color: #7986cb; cursor: pointer; transition: all .2s; background: #f8f9ff;
+  }
+  .import-zone:hover, .import-zone.drag { border-color: #3949ab; background: #e8eaf6; }
+  .import-zone .icon { font-size: 40px; margin-bottom: 10px; }
+  .import-zone p { font-size: 14px; font-weight: 600; }
+  .import-zone small { font-size: 12px; color: #aaa; }
+  #file-input { display: none; }
+
+  .preview-table { margin-top: 16px; max-height: 260px; overflow-y: auto; border-radius: 8px; border: 1px solid #e0e0e0; }
+  .import-result { background: #f8f9ff; border-radius: 8px; padding: 16px; margin-top: 14px; font-size: 13px; }
+  .import-result li { margin: 4px 0; }
+
+  .search-box { padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 7px; font-size: 13px; outline: none; width: 220px; }
+  .search-box:focus { border-color: #3949ab; }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>🏭 QUẢN LÝ SẢN XUẤT</h1>
+  <a href="form.html">📝 Nhập liệu</a>
+  <a href="dashboard.html">📊 Dashboard</a>
+  <a href="plan.html" class="active">📋 Kế hoạch</a>
+</nav>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('lots')">📦 Lô sản xuất</button>
+    <button class="tab-btn" onclick="switchTab('styles')">👕 Style</button>
+    <button class="tab-btn" onclick="switchTab('lines')">🏭 Chuyền</button>
+    <button class="tab-btn" onclick="switchTab('import')">📥 Import Excel</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- TAB: LÔ SẢN XUẤT -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="tab-lots" class="tab-content active">
+    <div id="alert-lots" class="alert"></div>
+
+    <!-- Form thêm mới -->
+    <div class="card">
+      <div class="card-header"><h2>➕ Thêm lô sản xuất mới</h2></div>
+      <div class="inline-form">
+        <div class="fg">
+          <label>Style *</label>
+          <select id="lot-style" onchange="updateLotBuyer()">
+            <option value="">-- Chọn style --</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Buyer</label>
+          <input type="text" id="lot-buyer" readonly placeholder="Tự điền" style="background:#f5f5f5;width:110px">
+        </div>
+        <div class="fg">
+          <label>Tên lô *</label>
+          <input type="text" id="lot-name" placeholder="VD: Lô 1, Lô A..." style="width:120px">
+        </div>
+        <div class="fg">
+          <label>Ngày bắt đầu</label>
+          <input type="date" id="lot-start">
+        </div>
+        <div class="fg">
+          <label>Ngày kết thúc</label>
+          <input type="date" id="lot-end">
+        </div>
+        <div class="fg">
+          <label>Số lượng KH</label>
+          <input type="number" id="lot-qty" placeholder="0" style="width:110px">
+        </div>
+        <div class="fg" style="justify-content:flex-end">
+          <button class="btn btn-primary" onclick="addLot()">💾 Thêm lô</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danh sách lô -->
+    <div class="card">
+      <div class="card-header">
+        <h2>📦 Danh sách lô sản xuất</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="lot-filter-style" onchange="loadLots()" style="border:1.5px solid #ddd;border-radius:7px;padding:7px 10px;font-size:13px;outline:none">
+            <option value="">Tất cả style</option>
+          </select>
+          <input class="search-box" type="text" placeholder="🔍 Tìm lô..." oninput="filterLots(this.value)">
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Style</th><th>Buyer</th><th>Tên lô</th><th>Bắt đầu</th><th>Kết thúc</th><th style="text-align:right">KH (cái)</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody id="lots-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- TAB: STYLE -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="tab-styles" class="tab-content">
+    <div id="alert-styles" class="alert"></div>
+    <div class="card">
+      <div class="card-header"><h2>➕ Thêm style mới</h2></div>
+      <div class="inline-form">
+        <div class="fg">
+          <label>Mã style *</label>
+          <input type="text" id="s-code" placeholder="VD: 70645" style="width:120px">
+        </div>
+        <div class="fg">
+          <label>Buyer *</label>
+          <input type="text" id="s-buyer" placeholder="puma, alo..." style="width:120px">
+        </div>
+        <div class="fg">
+          <label>Loại sản phẩm *</label>
+          <input type="text" id="s-type" placeholder="T-shirt, jacket..." style="width:140px">
+        </div>
+        <div class="fg">
+          <label>Trạng thái</label>
+          <select id="s-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="fg" style="justify-content:flex-end">
+          <button class="btn btn-primary" onclick="addStyle()">💾 Thêm style</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>👕 Danh sách Style</h2>
+        <input class="search-box" type="text" placeholder="🔍 Tìm style..." oninput="filterStyles(this.value)">
+      </div>
+      <table>
+        <thead><tr><th>Mã style</th><th>Buyer</th><th>Loại SP</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody id="styles-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- TAB: CHUYỀN -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="tab-lines" class="tab-content">
+    <div id="alert-lines" class="alert"></div>
+    <div class="card">
+      <div class="card-header"><h2>➕ Thêm chuyền mới</h2></div>
+      <div class="inline-form">
+        <div class="fg">
+          <label>Mã chuyền *</label>
+          <input type="text" id="l-code" placeholder="VD: 20" style="width:110px">
+        </div>
+        <div class="fg">
+          <label>Tên chuyền *</label>
+          <input type="text" id="l-name" placeholder="VD: Chuyền 20" style="width:160px">
+        </div>
+        <div class="fg">
+          <label>Trạng thái</label>
+          <select id="l-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="fg" style="justify-content:flex-end">
+          <button class="btn btn-primary" onclick="addLine()">💾 Thêm chuyền</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2>🏭 Danh sách Chuyền</h2></div>
+      <table>
+        <thead><tr><th>Mã</th><th>Tên chuyền</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody id="lines-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- TAB: IMPORT EXCEL -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="tab-import" class="tab-content">
+    <div class="card">
+      <div class="card-header"><h2>📥 Import từ file Excel</h2></div>
+      <p style="font-size:13px;color:#666;margin-bottom:16px">
+        File Excel cần có các sheet: <b>lines</b>, <b>styles</b>, <b>Sheet1</b> (lô sx) — giống file mẫu đã dùng.
+      </p>
+
+      <div class="import-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event)">
+        <div class="icon">📂</div>
+        <p>Kéo thả file Excel vào đây</p>
+        <small>hoặc nhấn để chọn file (.xlsx)</small>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx" onchange="handleFile(this.files[0])">
+
+      <div id="import-preview" style="display:none">
+        <div id="import-result" class="import-result"></div>
+        <div id="preview-wrap" class="preview-table"></div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-success" onclick="confirmImport()">✅ Xác nhận import</button>
+          <button class="btn" style="background:#f5f5f5;color:#555" onclick="cancelImport()">❌ Hủy</button>
+        </div>
+      </div>
+
+      <div id="import-done" style="display:none" class="alert success">
+        ✅ Import thành công!
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2>📋 Định dạng file Excel mẫu</h2></div>
+      <p style="font-size:13px;color:#666;margin-bottom:14px">File Excel cần có đúng cấu trúc như sau:</p>
+      <table>
+        <thead><tr><th>Sheet</th><th>Cột bắt buộc</th><th>Mô tả</th></tr></thead>
+        <tbody>
+          <tr><td><b>lines</b></td><td>line_code, line_name, status</td><td>Danh sách chuyền</td></tr>
+          <tr><td><b>styles</b></td><td>style_code, buyer, product_type, status</td><td>Danh sách style</td></tr>
+          <tr><td><b>Sheet1</b></td><td>style_code, buyer, product_type, Lô sx, start, end</td><td>Lô sản xuất</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL SỬA LÔ -->
+<div class="modal-bg" id="modal-lot">
+  <div class="modal">
+    <h3>✏️ Sửa lô sản xuất</h3>
+    <input type="hidden" id="edit-lot-id">
+    <div class="fg"><label>Style</label><input type="text" id="edit-lot-style" readonly style="background:#f5f5f5"></div>
+    <div class="fg"><label>Tên lô *</label><input type="text" id="edit-lot-name"></div>
+    <div class="fg"><label>Ngày bắt đầu</label><input type="date" id="edit-lot-start"></div>
+    <div class="fg"><label>Ngày kết thúc</label><input type="date" id="edit-lot-end"></div>
+    <div class="fg"><label>Số lượng KH</label><input type="number" id="edit-lot-qty" min="0"></div>
+    <div class="modal-footer">
+      <button class="btn" style="background:#f5f5f5;color:#555" onclick="closeModal('modal-lot')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveLot()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SỬA STYLE -->
+<div class="modal-bg" id="modal-style">
+  <div class="modal">
+    <h3>✏️ Sửa Style</h3>
+    <input type="hidden" id="edit-style-id">
+    <div class="fg"><label>Mã style</label><input type="text" id="edit-style-code" readonly style="background:#f5f5f5"></div>
+    <div class="fg"><label>Buyer *</label><input type="text" id="edit-style-buyer"></div>
+    <div class="fg"><label>Loại sản phẩm *</label><input type="text" id="edit-style-type"></div>
+    <div class="fg"><label>Trạng thái</label>
+      <select id="edit-style-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:#f5f5f5;color:#555" onclick="closeModal('modal-style')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveStyle()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SỬA CHUYỀN -->
+<div class="modal-bg" id="modal-line">
+  <div class="modal">
+    <h3>✏️ Sửa Chuyền</h3>
+    <input type="hidden" id="edit-line-id">
+    <div class="fg"><label>Mã chuyền</label><input type="text" id="edit-line-code" readonly style="background:#f5f5f5"></div>
+    <div class="fg"><label>Tên chuyền *</label><input type="text" id="edit-line-name"></div>
+    <div class="fg"><label>Trạng thái</label>
+      <select id="edit-line-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:#f5f5f5;color:#555" onclick="closeModal('modal-line')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveLine()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const API = '';
+let allLots = [], allStyles = [], allLines = [];
+let importData = null;
+
+// ─── TABS ────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'lots') loadLots();
+  if (name === 'styles') loadStyles();
+  if (name === 'lines') loadLines();
+}
+
+function fmt(n) { return n ? Number(n).toLocaleString('vi-VN') : '—'; }
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = `alert ${type}`; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── LINES ───────────────────────────────────────────────────
+async function loadLines() {
+  const data = await fetch(`${API}/api/lines/all`).then(r => r.json());
+  allLines = data;
+  const tbody = document.getElementById('lines-body');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:20px">Chưa có dữ liệu</td></tr>'; return; }
+  tbody.innerHTML = data.map(l => `
+    <tr>
+      <td><b>${l.line_code}</b></td>
+      <td>${l.line_name}</td>
+      <td><span class="badge badge-${l.status}">${l.status}</span></td>
+      <td>
+        <button class="btn-edit" onclick="openEditLine('${l.line_code}','${l.line_name}','${l.status}')">✏️</button>
+        <button class="btn-danger" onclick="deleteLine('${l.line_code}')">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function addLine() {
+  const code = document.getElementById('l-code').value.trim();
+  const name = document.getElementById('l-name').value.trim();
+  const status = document.getElementById('l-status').value;
+  if (!code || !name) { showAlert('alert-lines','⚠️ Vui lòng nhập đầy đủ mã và tên chuyền','error'); return; }
+  const r = await fetch(`${API}/api/lines`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({line_code:code,line_name:name,status}) });
+  const d = await r.json();
+  if (d.success) { showAlert('alert-lines','✅ Đã thêm chuyền','success'); document.getElementById('l-code').value=''; document.getElementById('l-name').value=''; loadLines(); }
+  else showAlert('alert-lines','❌ '+d.error,'error');
+}
+
+function openEditLine(code, name, status) {
+  document.getElementById('edit-line-id').value = code;
+  document.getElementById('edit-line-code').value = code;
+  document.getElementById('edit-line-name').value = name;
+  document.getElementById('edit-line-status').value = status;
+  document.getElementById('modal-line').classList.add('open');
+}
+
+async function saveLine() {
+  const code = document.getElementById('edit-line-id').value;
+  const name = document.getElementById('edit-line-name').value.trim();
+  const status = document.getElementById('edit-line-status').value;
+  const r = await fetch(`${API}/api/lines/${code}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({line_name:name,status}) });
+  const d = await r.json();
+  if (d.success) { closeModal('modal-line'); showAlert('alert-lines','✅ Đã cập nhật','success'); loadLines(); }
+}
+
+async function deleteLine(code) {
+  if (!confirm(`Xóa chuyền ${code}? Dữ liệu sản xuất liên quan vẫn được giữ.`)) return;
+  const r = await fetch(`${API}/api/lines/${code}`, { method:'DELETE' });
+  const d = await r.json();
+  if (d.success) { showAlert('alert-lines','✅ Đã xóa','success'); loadLines(); }
+  else showAlert('alert-lines','❌ '+d.error,'error');
+}
+
+// ─── STYLES ──────────────────────────────────────────────────
+async function loadStyles() {
+  const data = await fetch(`${API}/api/styles/all`).then(r => r.json());
+  allStyles = data;
+  renderStylesTable(data);
+  // Cập nhật select style trong tab lots
+  const sel = document.getElementById('lot-style');
+  sel.innerHTML = '<option value="">-- Chọn style --</option>';
+  const selFilter = document.getElementById('lot-filter-style');
+  selFilter.innerHTML = '<option value="">Tất cả style</option>';
+  data.filter(s => s.status === 'active').forEach(s => {
+    sel.innerHTML += `<option value="${s.style_code}" data-buyer="${s.buyer}">${s.style_code} — ${s.buyer}</option>`;
+    selFilter.innerHTML += `<option value="${s.style_code}">${s.style_code}</option>`;
+  });
+}
+
+function renderStylesTable(data) {
+  const tbody = document.getElementById('styles-body');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">Chưa có dữ liệu</td></tr>'; return; }
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td><b>${s.style_code}</b></td>
+      <td><span class="badge badge-buyer">${s.buyer||'—'}</span></td>
+      <td>${s.product_type||'—'}</td>
+      <td><span class="badge badge-${s.status}">${s.status}</span></td>
+      <td>
+        <button class="btn-edit" onclick='openEditStyle(${JSON.stringify(s)})'>✏️</button>
+        <button class="btn-danger" onclick="deleteStyle('${s.style_code}')">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterStyles(q) {
+  const filtered = allStyles.filter(s =>
+    s.style_code.toString().includes(q) || (s.buyer||'').toLowerCase().includes(q.toLowerCase()) || (s.product_type||'').toLowerCase().includes(q.toLowerCase())
+  );
+  renderStylesTable(filtered);
+}
+
+async function addStyle() {
+  const code = document.getElementById('s-code').value.trim();
+  const buyer = document.getElementById('s-buyer').value.trim();
+  const type = document.getElementById('s-type').value.trim();
+  const status = document.getElementById('s-status').value;
+  if (!code || !buyer || !type) { showAlert('alert-styles','⚠️ Vui lòng nhập đầy đủ thông tin','error'); return; }
+  const r = await fetch(`${API}/api/styles`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({style_code:code,buyer,product_type:type,status}) });
+  const d = await r.json();
+  if (d.success) { showAlert('alert-styles','✅ Đã thêm style','success'); document.getElementById('s-code').value=''; document.getElementById('s-buyer').value=''; document.getElementById('s-type').value=''; loadStyles(); }
+  else showAlert('alert-styles','❌ '+d.error,'error');
+}
+
+function openEditStyle(s) {
+  document.getElementById('edit-style-id').value = s.id || s.style_code;
+  document.getElementById('edit-style-code').value = s.style_code;
+  document.getElementById('edit-style-buyer').value = s.buyer;
+  document.getElementById('edit-style-type').value = s.product_type;
+  document.getElementById('edit-style-status').value = s.status;
+  document.getElementById('modal-style').classList.add('open');
+}
+
+async function saveStyle() {
+  const id = document.getElementById('edit-style-id').value;
+  const code = document.getElementById('edit-style-code').value;
+  const buyer = document.getElementById('edit-style-buyer').value.trim();
+  const type = document.getElementById('edit-style-type').value.trim();
+  const status = document.getElementById('edit-style-status').value;
+  const r = await fetch(`${API}/api/styles/${code}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({buyer,product_type:type,status}) });
+  const d = await r.json();
+  if (d.success) { closeModal('modal-style'); showAlert('alert-styles','✅ Đã cập nhật','success'); loadStyles(); }
+}
+
+async function deleteStyle(code) {
+  if (!confirm(`Xóa style ${code}?`)) return;
+  const r = await fetch(`${API}/api/styles/${code}`, { method:'DELETE' });
+  const d = await r.json();
+  if (d.success) { showAlert('alert-styles','✅ Đã xóa','success'); loadStyles(); }
+  else showAlert('alert-styles','❌ '+d.error,'error');
+}
+
+// ─── LOTS ────────────────────────────────────────────────────
+function updateLotBuyer() {
+  const sel = document.getElementById('lot-style');
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('lot-buyer').value = opt.dataset.buyer || '';
+}
+
+async function loadLots() {
+  const filterStyle = document.getElementById('lot-filter-style')?.value || '';
+  const url = filterStyle ? `${API}/api/lots/all?style=${filterStyle}` : `${API}/api/lots/all`;
+  const data = await fetch(url).then(r => r.json());
+  allLots = data;
+  renderLotsTable(data);
+}
+
+function renderLotsTable(data) {
+  const tbody = document.getElementById('lots-body');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px">Chưa có lô sản xuất</td></tr>'; return; }
+  const today = new Date().toISOString().split('T')[0];
+  tbody.innerHTML = data.map(l => {
+    let statusBadge = '';
+    if (l.end_date && l.end_date < today) statusBadge = '<span class="badge badge-inactive">Kết thúc</span>';
+    else if (l.start_date && l.start_date <= today) statusBadge = '<span class="badge badge-active">Đang SX</span>';
+    else statusBadge = '<span class="badge" style="background:#fff8e1;color:#f57f17">Sắp tới</span>';
+    return `<tr>
+      <td><b>${l.style_code}</b></td>
+      <td><span class="badge badge-buyer">${l.buyer||'—'}</span></td>
+      <td>${l.lot_name}</td>
+      <td>${l.start_date||'—'}</td>
+      <td>${l.end_date||'—'}</td>
+      <td style="text-align:right">${fmt(l.planned_qty)}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <button class="btn-edit" onclick='openEditLot(${JSON.stringify(l)})'>✏️</button>
+        <button class="btn-danger" onclick="deleteLot(${l.id})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterLots(q) {
+  const filtered = allLots.filter(l =>
+    l.lot_name.toLowerCase().includes(q.toLowerCase()) ||
+    l.style_code.toString().includes(q)
+  );
+  renderLotsTable(filtered);
+}
+
+async function addLot() {
+  const style_code = document.getElementById('lot-style').value;
+  const lot_name = document.getElementById('lot-name').value.trim();
+  const start_date = document.getElementById('lot-start').value;
+  const end_date = document.getElementById('lot-end').value;
+  const planned_qty = document.getElementById('lot-qty').value;
+  if (!style_code || !lot_name) { showAlert('alert-lots','⚠️ Vui lòng chọn style và nhập tên lô','error'); return; }
+  const r = await fetch(`${API}/api/lots`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({style_code,lot_name,start_date,end_date,planned_qty:planned_qty||0}) });
+  const d = await r.json();
+  if (d.success) {
+    showAlert('alert-lots','✅ Đã thêm lô sản xuất','success');
+    document.getElementById('lot-name').value=''; document.getElementById('lot-start').value=''; document.getElementById('lot-end').value=''; document.getElementById('lot-qty').value='';
+    loadLots();
+  } else showAlert('alert-lots','❌ '+d.error,'error');
+}
+
+function openEditLot(l) {
+  document.getElementById('edit-lot-id').value = l.id;
+  document.getElementById('edit-lot-style').value = `${l.style_code} — ${l.buyer||''}`;
+  document.getElementById('edit-lot-name').value = l.lot_name;
+  document.getElementById('edit-lot-start').value = l.start_date||'';
+  document.getElementById('edit-lot-end').value = l.end_date||'';
+  document.getElementById('edit-lot-qty').value = l.planned_qty||'';
+  document.getElementById('modal-lot').classList.add('open');
+}
+
+async function saveLot() {
+  const id = document.getElementById('edit-lot-id').value;
+  const lot_name = document.getElementById('edit-lot-name').value.trim();
+  const start_date = document.getElementById('edit-lot-start').value;
+  const end_date = document.getElementById('edit-lot-end').value;
+  const planned_qty = document.getElementById('edit-lot-qty').value;
+  const r = await fetch(`${API}/api/lots/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({lot_name,start_date,end_date,planned_qty:planned_qty||0}) });
+  const d = await r.json();
+  if (d.success) { closeModal('modal-lot'); showAlert('alert-lots','✅ Đã cập nhật','success'); loadLots(); }
+}
+
+async function deleteLot(id) {
+  if (!confirm('Xóa lô sản xuất này?')) return;
+  const r = await fetch(`${API}/api/lots/${id}`, { method:'DELETE' });
+  const d = await r.json();
+  if (d.success) { showAlert('alert-lots','✅ Đã xóa','success'); loadLots(); }
+}
+
+// ─── IMPORT EXCEL ─────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.querySelector('.import-zone').classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFile(file) {
+  if (!file || !file.name.endsWith('.xlsx')) { alert('Vui lòng chọn file .xlsx'); return; }
+  const reader = new FileReader();
+  reader.onload = e => parseExcel(e.target.result);
+  reader.readAsArrayBuffer(file);
+}
+
+function parseExcel(buffer) {
+  const wb = XLSX.read(buffer, { type:'array', cellDates:true });
+  const result = { lines:[], styles:[], lots:[], errors:[] };
+
+  if (wb.SheetNames.includes('lines')) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['lines']);
+    rows.forEach(r => {
+      if (r.line_code && r.line_name) result.lines.push({ line_code: String(r.line_code), line_name: r.line_name, status: r.status||'active' });
+      else result.errors.push(`lines: thiếu line_code hoặc line_name`);
+    });
+  }
+
+  if (wb.SheetNames.includes('styles')) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['styles']);
+    const seen = new Set();
+    rows.forEach(r => {
+      const key = String(r.style_code);
+      if (r.style_code && r.buyer && !seen.has(key)) {
+        seen.add(key);
+        result.styles.push({ style_code: key, buyer: r.buyer, product_type: r.product_type||'', status: r.status||'active' });
+      }
+    });
+  }
+
+  const lotSheet = wb.SheetNames.find(n => n === 'Sheet1') || wb.SheetNames[wb.SheetNames.length-1];
+  if (lotSheet) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[lotSheet]);
+    rows.forEach(r => {
+      if (!r.style_code || !r['Lô sx']) return;
+      const start = r.start instanceof Date ? r.start.toISOString().split('T')[0] : (r.start||'');
+      const end = r.end instanceof Date ? r.end.toISOString().split('T')[0] : (r.end||'');
+      result.lots.push({ style_code: String(r.style_code), buyer: r.buyer||'', lot_name: r['Lô sx'], start_date: start, end_date: end });
+    });
+  }
+
+  importData = result;
+
+  const el = document.getElementById('import-result');
+  el.innerHTML = `<b>📊 Phân tích file:</b><ul style="margin-top:8px;margin-left:16px">
+    <li>🏭 Chuyền: <b>${result.lines.length}</b> dòng</li>
+    <li>👕 Style: <b>${result.styles.length}</b> dòng (đã loại trùng)</li>
+    <li>📦 Lô sản xuất: <b>${result.lots.length}</b> dòng</li>
+    ${result.errors.length ? `<li style="color:#c62828">⚠️ Lỗi: ${result.errors.join(', ')}</li>` : ''}
+  </ul>`;
+
+  // Preview
+  const wrap = document.getElementById('preview-wrap');
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Sheet</th><th>Dữ liệu mẫu</th></tr></thead>
+    <tbody>
+      ${result.lines.slice(0,3).map(l=>`<tr><td>lines</td><td>${l.line_code} — ${l.line_name}</td></tr>`).join('')}
+      ${result.styles.slice(0,3).map(s=>`<tr><td>styles</td><td>${s.style_code} — ${s.buyer} / ${s.product_type}</td></tr>`).join('')}
+      ${result.lots.slice(0,3).map(l=>`<tr><td>lots</td><td>${l.style_code} / ${l.lot_name} (${l.start_date})</td></tr>`).join('')}
+    </tbody>
+  </table>`;
+
+  document.getElementById('import-preview').style.display = 'block';
+  document.getElementById('import-done').style.display = 'none';
+}
+
+async function confirmImport() {
+  if (!importData) return;
+  const r = await fetch(`${API}/api/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(importData)
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('import-preview').style.display = 'none';
+    const done = document.getElementById('import-done');
+    done.textContent = `✅ Import thành công! Đã thêm/cập nhật: ${d.lines} chuyền, ${d.styles} style, ${d.lots} lô sản xuất.`;
+    done.style.display = 'block';
+    importData = null;
+  }
+}
+
+function cancelImport() {
+  importData = null;
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('file-input').value = '';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+async function init() {
+  await loadStyles();
+  await loadLots();
+}
+init();
+</script>
+</body>
+</html>

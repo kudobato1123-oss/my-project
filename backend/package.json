@@ -1,0 +1,14 @@
+{
+  "name": "production-app",
+  "version": "1.0.0",
+  "description": "Quản lý Sản xuất",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}

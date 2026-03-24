@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Sản xuất</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; }
+  nav { background: #1a237e; color: #fff; display: flex; align-items: center; padding: 0 24px; height: 52px; gap: 4px; }
+  nav h1 { font-size: 15px; font-weight: 700; flex: 1; }
+  nav a { color: #fff; text-decoration: none; padding: 14px 16px; font-size: 13px; opacity: 0.75; font-weight: 500; transition: opacity .2s; }
+  nav a:hover { opacity: 1; }
+  nav a.active { opacity: 1; border-bottom: 3px solid #82b1ff; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+  .filter-bar { background: #fff; border-radius: 10px; padding: 14px 20px; display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; }
+  .filter-bar label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+  .filter-bar input { border: 1.5px solid #ddd; border-radius: 7px; padding: 8px 12px; font-size: 13px; outline: none; }
+  .btn-filter { background: #1a237e; color: #fff; border: none; border-radius: 7px; padding: 9px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-filter:hover { background: #3949ab; }
+  .btn-clear { background: #f5f5f5; color: #555; border: 1.5px solid #ddd; border-radius: 7px; padding: 9px 14px; font-size: 13px; cursor: pointer; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-box { background: #fff; border-radius: 10px; padding: 18px 20px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08); border-top: 4px solid #3949ab; }
+  .stat-box.green { border-top-color: #2e7d32; }
+  .stat-box.orange { border-top-color: #e65100; }
+  .stat-box.red { border-top-color: #c62828; }
+  .stat-box .val { font-size: 24px; font-weight: 800; color: #1a237e; }
+  .stat-box.green .val { color: #2e7d32; }
+  .stat-box.orange .val { color: #e65100; }
+  .stat-box.red .val { color: #c62828; }
+  .stat-box .lbl { font-size: 12px; color: #888; margin-top: 5px; }
+
+  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+  .card h2 { font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e8eaf6; }
+  .card h2.inc { color: #e65100; border-bottom-color: #ffe0b2; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* VERTICAL BAR CHART */
+  .bar-wrap { display: flex; align-items: flex-end; gap: 8px; height: 220px; padding: 0 4px 32px; position: relative; border-bottom: 2px solid #e0e0e0; overflow-x: auto; }
+  .bar-empty { color: #aaa; text-align: center; padding: 20px; font-size: 13px; width: 100%; }
+  .bar-item { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; min-width: 44px; max-width: 90px; height: 100%; position: relative; }
+  .bar-val { font-size: 11px; font-weight: 700; color: #444; margin-bottom: 4px; text-align: center; white-space: nowrap; }
+  .bar-col { width: 100%; border-radius: 5px 5px 0 0; transition: height .5s ease; position: relative; min-height: 4px; }
+  .bar-col.blue   { background: linear-gradient(180deg,#5c6bc0,#3949ab); }
+  .bar-col.green  { background: linear-gradient(180deg,#43a047,#2e7d32); }
+  .bar-col.orange { background: linear-gradient(180deg,#f57c00,#e65100); }
+  .bar-col.purple { background: linear-gradient(180deg,#8e24aa,#6a1b9a); }
+  .bar-col.red    { background: linear-gradient(180deg,#e53935,#c62828); }
+  .bar-col.amber  { background: linear-gradient(180deg,#fbc02d,#f57f17); }
+  .bar-col:hover { filter: brightness(1.15); }
+  .bar-label { position: absolute; bottom: -28px; font-size: 11px; color: #555; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; max-width: 80px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #e8eaf6; color: #1a237e; padding: 9px 12px; text-align: left; font-weight: 700; }
+  th.inc-th { background: #fff3e0; color: #e65100; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .num { text-align: right; font-weight: 700; color: #1a237e; }
+  .num-inc { text-align: right; font-weight: 700; color: #e65100; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #e8eaf6; color: #3949ab; }
+  .badge-inc { background: #fff3e0; color: #e65100; }
+  .divider { height: 4px; background: linear-gradient(90deg,#ffe0b2,#ffcc80,#ffe0b2); border-radius: 4px; margin: 4px 0 24px; }
+
+  @media(max-width:700px) { .stat-row{grid-template-columns:1fr 1fr} .grid-2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<nav>
+  <h1>🏭 QUẢN LÝ SẢN XUẤT</h1>
+  <a href="form.html">📝 Nhập liệu</a>
+  <a href="dashboard.html" class="active">📊 Dashboard</a>
+  <a href="plan.html">📋 Kế hoạch</a>
+</nav>
+
+<div class="container">
+
+  <div class="filter-bar">
+    <div><label>Từ ngày</label><input type="date" id="d-from"></div>
+    <div><label>Đến ngày</label><input type="date" id="d-to"></div>
+    <button class="btn-filter" onclick="loadAll()">🔍 Xem báo cáo</button>
+    <button class="btn-clear" onclick="clearFilter()">Tất cả</button>
+    <div style="margin-left:auto;font-size:12px;color:#aaa" id="filter-label"></div>
+  </div>
+
+  <!-- STAT BOXES -->
+  <div class="stat-row">
+    <div class="stat-box"><div class="val" id="stat-total">—</div><div class="lbl">Tổng sản lượng</div></div>
+    <div class="stat-box green"><div class="val" id="stat-avg">—</div><div class="lbl">TB / ngày</div></div>
+    <div class="stat-box orange"><div class="val" id="stat-inc-total">—</div><div class="lbl">Tổng thời gian sự cố</div></div>
+    <div class="stat-box red"><div class="val" id="stat-inc-count">—</div><div class="lbl">Số lần sự cố</div></div>
+  </div>
+
+  <!-- SẢN LƯỢNG THEO NGÀY -->
+  <div class="card">
+    <h2>📅 SẢN LƯỢNG THEO NGÀY</h2>
+    <div id="chart-date" class="bar-wrap"></div>
+  </div>
+
+  <!-- SẢN LƯỢNG: CHUYỀN + STYLE -->
+  <div class="grid-2">
+    <div class="card">
+      <h2>🏭 SẢN LƯỢNG THEO CHUYỀN</h2>
+      <div id="chart-line" class="bar-wrap"></div>
+    </div>
+    <div class="card">
+      <h2>👕 SẢN LƯỢNG THEO STYLE</h2>
+      <div id="chart-style" class="bar-wrap"></div>
+    </div>
+  </div>
+
+  <!-- SẢN LƯỢNG THEO THÁNG -->
+  <div class="card">
+    <h2>📆 SẢN LƯỢNG THEO THÁNG</h2>
+    <div id="chart-month" class="bar-wrap"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SỰ CỐ: THEO NGUYÊN NHÂN + THEO CHUYỀN -->
+  <div class="grid-2">
+    <div class="card">
+      <h2 class="inc">⚠️ THỜI GIAN ẢNH HƯỞNG THEO NGUYÊN NHÂN</h2>
+      <div id="chart-inc-reason" class="bar-wrap"></div>
+    </div>
+    <div class="card">
+      <h2 class="inc">⚠️ THỜI GIAN ẢNH HƯỞNG THEO CHUYỀN</h2>
+      <div id="chart-inc-line" class="bar-wrap"></div>
+    </div>
+  </div>
+
+  <!-- CHI TIẾT SỰ CỐ THEO NGUYÊN NHÂN (bảng) -->
+  <div class="card">
+    <h2 class="inc">📋 TỔNG HỢP SỰ CỐ THEO NGUYÊN NHÂN</h2>
+    <table>
+      <thead><tr>
+        <th class="inc-th">Nhóm</th>
+        <th class="inc-th">Nguyên nhân</th>
+        <th class="inc-th" style="text-align:right">Số lần</th>
+        <th class="inc-th" style="text-align:right">Tổng thời gian</th>
+        <th class="inc-th" style="text-align:right">TB/lần</th>
+      </tr></thead>
+      <tbody id="table-inc-reason"></tbody>
+    </table>
+  </div>
+
+  <!-- BẢNG CHI TIẾT TỪNG SỰ CỐ -->
+  <div class="card">
+    <h2 class="inc">📋 CHI TIẾT TỪNG SỰ CỐ</h2>
+    <table>
+      <thead><tr>
+        <th class="inc-th">Ngày</th>
+        <th class="inc-th">Chuyền</th>
+        <th class="inc-th">Nhóm</th>
+        <th class="inc-th">Nguyên nhân</th>
+        <th class="inc-th">Giờ BD</th>
+        <th class="inc-th">Giờ KT</th>
+        <th class="inc-th" style="text-align:right">Thời gian</th>
+        <th class="inc-th">Ghi chú</th>
+      </tr></thead>
+      <tbody id="table-inc-detail"></tbody>
+    </table>
+  </div>
+
+  <!-- BẢNG SẢN LƯỢNG CHI TIẾT -->
+  <div class="card">
+    <h2>📋 SẢN LƯỢNG CHI TIẾT</h2>
+    <table>
+      <thead><tr><th>Ngày</th><th>Chuyền</th><th>Style</th><th>Lô SX</th><th style="text-align:right">Sản lượng</th></tr></thead>
+      <tbody id="detail-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+function fmtMins(m) {
+  if (!m) return '0p';
+  const h = Math.floor(m/60), mn = m%60;
+  return h > 0 ? `${h}g ${mn}p` : `${m}p`;
+}
+
+async function loadAll() {
+  const from = document.getElementById('d-from').value;
+  const to   = document.getElementById('d-to').value;
+  const q    = (from&&to) ? `?from=${from}&to=${to}` : '';
+  document.getElementById('filter-label').textContent = (from&&to) ? `📅 ${from} → ${to}` : '';
+
+  const [byDate, byMonth, byLine, byStyle, incReason, incLine, incDetail, detail] = await Promise.all([
+    fetch(`${API}/api/report/by-date${q}`).then(r=>r.json()),
+    fetch(`${API}/api/report/by-month`).then(r=>r.json()),
+    fetch(`${API}/api/report/by-line${q}`).then(r=>r.json()),
+    fetch(`${API}/api/report/by-style${q}`).then(r=>r.json()),
+    fetch(`${API}/api/report/incidents-by-reason${q}`).then(r=>r.json()),
+    fetch(`${API}/api/report/incidents-by-line${q}`).then(r=>r.json()),
+    fetch(`${API}/api/report/incidents-detail${q}`).then(r=>r.json()),
+    fetch(`${API}/api/production/recent`).then(r=>r.json()),
+  ]);
+
+  // Stats sản lượng
+  const total = byDate.reduce((s,d)=>s+d.total,0);
+  const avg   = byDate.length ? Math.round(total/byDate.length) : 0;
+  document.getElementById('stat-total').textContent = fmt(total);
+  document.getElementById('stat-avg').textContent   = fmt(avg);
+
+  // Stats sự cố
+  const totalMins = incReason.reduce((s,d)=>s+d.total_minutes,0);
+  const totalOcc  = incReason.reduce((s,d)=>s+d.occurrences,0);
+  document.getElementById('stat-inc-total').textContent = fmtMins(totalMins);
+  document.getElementById('stat-inc-count').textContent = totalOcc;
+
+  // Charts sản lượng
+  renderBars('chart-date',  byDate,  d=>d.date,                    d=>d.total, 'blue',   20);
+  renderBars('chart-month', byMonth, d=>d.month,                   d=>d.total, 'green');
+  renderBars('chart-line',  byLine,  d=>d.line_name||d.line_code,  d=>d.total, 'orange');
+  renderBars('chart-style', byStyle, d=>String(d.style_code),      d=>d.total, 'purple');
+
+  // Charts sự cố
+  renderBars('chart-inc-reason', incReason, d=>d.reason_name||d.reason_code, d=>d.total_minutes, 'red');
+  renderBars('chart-inc-line',   incLine,   d=>d.line_name||d.line_code,     d=>d.total_minutes, 'amber');
+
+  // Bảng tổng hợp sự cố
+  const tReason = document.getElementById('table-inc-reason');
+  if (!incReason.length) {
+    tReason.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">Chưa có sự cố</td></tr>';
+  } else {
+    tReason.innerHTML = incReason.map(d => {
+      const avg = Math.round(d.total_minutes/d.occurrences);
+      return `<tr>
+        <td><span class="badge badge-inc">${d.reason_group||''}</span></td>
+        <td>${d.reason_name||d.reason_code}</td>
+        <td class="num-inc">${d.occurrences}</td>
+        <td class="num-inc">${fmtMins(d.total_minutes)}</td>
+        <td class="num-inc">${fmtMins(avg)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Bảng chi tiết sự cố
+  const tDetail = document.getElementById('table-inc-detail');
+  if (!incDetail.length) {
+    tDetail.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:16px">Chưa có sự cố</td></tr>';
+  } else {
+    tDetail.innerHTML = incDetail.map(d => `<tr>
+      <td>${d.date}</td>
+      <td>${d.line_name||d.line_code}</td>
+      <td><span class="badge badge-inc">${d.reason_group||''}</span></td>
+      <td>${d.reason_name||d.reason_code}</td>
+      <td>${d.time_start}</td>
+      <td>${d.time_end}</td>
+      <td class="num-inc">${fmtMins(d.duration_minutes)}</td>
+      <td style="font-size:12px;color:#888">${d.note||'—'}</td>
+    </tr>`).join('');
+  }
+
+  // Bảng sản lượng
+  const tbody = document.getElementById('detail-body');
+  if (!detail.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">Chưa có dữ liệu</td></tr>';
+  } else {
+    tbody.innerHTML = detail.map(d => `<tr>
+      <td>${d.date}</td>
+      <td>${d.line_name||d.line_code}</td>
+      <td><b>${d.style_code}</b> <span style="color:#888;font-size:11px">${d.buyer||''} / ${d.product_type||''}</span></td>
+      <td>${d.lot_name}</td>
+      <td class="num">${fmt(d.output)}</td>
+    </tr>`).join('');
+  }
+}
+
+function renderBars(id, data, labelFn, valFn, color, limit=999) {
+  const el = document.getElementById(id);
+  if (!data.length) { el.innerHTML = '<div class="bar-empty">Chưa có dữ liệu</div>'; return; }
+  const max = Math.max(...data.map(valFn));
+  const MAX_H = 180; // px - chiều cao tối đa cột
+  el.innerHTML = data.slice(0, limit).map(d => {
+    const pct  = max ? Math.max(Math.round(valFn(d) / max * MAX_H), 4) : 4;
+    const isInc = color === 'red' || color === 'amber';
+    const label = isInc ? fmtMins(valFn(d)) : fmt(valFn(d));
+    return `<div class="bar-item">
+      <div class="bar-val">${label}</div>
+      <div class="bar-col ${color}" style="height:${pct}px" title="${labelFn(d)}: ${label}"></div>
+      <div class="bar-label" title="${labelFn(d)}">${labelFn(d)}</div>
+    </div>`;
+  }).join('');
+}
+
+function clearFilter() {
+  document.getElementById('d-from').value='';
+  document.getElementById('d-to').value='';
+  loadAll();
+}
+
+// Default: tháng hiện tại
+const now = new Date();
+document.getElementById('d-from').value = new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+document.getElementById('d-to').value   = now.toISOString().split('T')[0];
+loadAll();
+</script>
+</body>
+</html>

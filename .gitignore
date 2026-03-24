@@ -1,0 +1,6 @@
+node_modules/
+data/
+new/
+new2/
+*.db
+.claude/

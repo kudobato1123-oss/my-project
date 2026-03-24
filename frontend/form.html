@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhập liệu Sản xuất</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; min-height: 100vh; }
+  nav { background: #1a237e; color: #fff; display: flex; align-items: center; padding: 0 24px; height: 52px; gap: 8px; }
+  nav h1 { font-size: 15px; font-weight: 700; flex: 1; }
+  nav a { color: #fff; text-decoration: none; padding: 14px 18px; font-size: 14px; opacity: 0.75; font-weight: 500; transition: opacity .2s; }
+  nav a:hover { opacity: 1; }
+  nav a.active { opacity: 1; border-bottom: 3px solid #82b1ff; }
+  .container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 6px rgba(0,0,0,.08); margin-bottom: 24px; }
+  .card h2 { font-size: 15px; font-weight: 700; color: #1a237e; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #e8eaf6; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-group label { font-size: 13px; font-weight: 600; color: #555; }
+  .form-group input, .form-group select { border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; transition: border .2s; background: #fafafa; }
+  .form-group input:focus, .form-group select:focus { border-color: #3949ab; background: #fff; }
+  .hint { font-size: 11px; color: #888; margin-top: 2px; }
+  .style-meta { background: #e8eaf6; border-radius: 6px; padding: 7px 12px; font-size: 12px; color: #3949ab; margin-top: 4px; display: none; }
+  .btn-row { display: flex; gap: 12px; margin-top: 4px; }
+  .btn-submit { flex: 1; background: #1a237e; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .btn-submit:hover { background: #3949ab; }
+  .btn-reset { background: #f5f5f5; color: #555; border: 1.5px solid #ddd; border-radius: 8px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .alert.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .alert.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; font-weight: 700; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .btn-del { background: none; border: none; color: #c62828; cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+  .btn-del:hover { background: #ffebee; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #e8eaf6; color: #3949ab; }
+  .badge-inc { background: #fff3e0; color: #e65100; }
+  .divider { height: 4px; background: linear-gradient(90deg,#e8eaf6,#c5cae9,#e8eaf6); border-radius: 4px; margin: 4px 0 24px; }
+</style>
+</head>
+<body>
+<nav>
+  <h1>🏭 QUẢN LÝ SẢN XUẤT</h1>
+  <a href="form.html" class="active">📝 Nhập liệu</a>
+  <a href="dashboard.html">📊 Dashboard</a>
+  <a href="plan.html">📋 Kế hoạch</a>
+</nav>
+
+<div class="container">
+
+  <!-- NHẬP SẢN LƯỢNG -->
+  <div class="card">
+    <h2>NHẬP SẢN LƯỢNG</h2>
+    <div id="alert-prod" class="alert"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>📅 Ngày sản xuất *</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-group">
+        <label>🏭 Chuyền *</label>
+        <select id="f-line"><option value="">-- Chọn chuyền --</option></select>
+      </div>
+      <div class="form-group">
+        <label>👕 Style *</label>
+        <select id="f-style" onchange="loadLots()"><option value="">-- Chọn style --</option></select>
+        <div class="style-meta" id="style-meta"></div>
+      </div>
+      <div class="form-group">
+        <label>📦 Lô sản xuất *</label>
+        <select id="f-lot"><option value="">-- Chọn style trước --</option></select>
+        <span class="hint" id="lot-info"></span>
+      </div>
+      <div class="form-group full">
+        <label>🔢 Sản lượng (cái) *</label>
+        <input type="number" id="f-output" min="0" placeholder="Nhập số lượng">
+      </div>
+    </div>
+    <br>
+    <div class="btn-row">
+      <button class="btn-submit" onclick="submitProd()">💾 Lưu sản lượng</button>
+      <button class="btn-reset" onclick="resetProd()">🔄 Nhập lại</button>
+    </div>
+  </div>
+
+  <!-- LỊCH SỬ SẢN LƯỢNG -->
+  <div class="card">
+    <h2>LỊCH SỬ NHẬP GẦN ĐÂY</h2>
+    <table>
+      <thead><tr><th>Ngày</th><th>Chuyền</th><th>Style</th><th>Lô SX</th><th style="text-align:right">Sản lượng</th><th></th></tr></thead>
+      <tbody id="recent-body"></tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- NHẬP SỰ CỐ -->
+  <div class="card" style="border-top:3px solid #e65100">
+    <h2 style="color:#e65100">⚠️ NHẬP ẢNH HƯỞNG SẢN XUẤT</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:16px">1 chuyền trong 1 ngày có thể có nhiều sự cố ở các khung giờ khác nhau</p>
+    <div id="alert-inc" class="alert"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>📅 Ngày *</label>
+        <input type="date" id="i-date">
+      </div>
+      <div class="form-group">
+        <label>🏭 Chuyền *</label>
+        <select id="i-line"><option value="">-- Chọn chuyền --</option></select>
+      </div>
+      <div class="form-group">
+        <label>⚠️ Nguyên nhân *</label>
+        <select id="i-reason"><option value="">-- Chọn nguyên nhân --</option></select>
+      </div>
+      <div class="form-group">
+        <label>⏱ Thời gian ảnh hưởng</label>
+        <input type="text" id="i-duration" readonly placeholder="Tự tính sau khi nhập giờ" style="background:#f5f5f5;font-weight:700;color:#e65100">
+      </div>
+      <div class="form-group">
+        <label>🕐 Giờ bắt đầu *</label>
+        <input type="time" id="i-start" step="300" oninput="calcDuration()">
+      </div>
+      <div class="form-group">
+        <label>🕒 Giờ kết thúc *</label>
+        <input type="time" id="i-end" step="300" oninput="calcDuration()">
+      </div>
+      <div class="form-group full">
+        <label>📝 Ghi chú (tuỳ chọn)</label>
+        <input type="text" id="i-note" placeholder="Mô tả thêm nếu cần...">
+      </div>
+    </div>
+    <br>
+    <div class="btn-row">
+      <button class="btn-submit" style="background:#e65100" onclick="submitIncident()">💾 Lưu sự cố</button>
+      <button class="btn-reset" onclick="resetIncident()">🔄 Nhập lại</button>
+    </div>
+  </div>
+
+  <!-- LỊCH SỬ SỰ CỐ -->
+  <div class="card">
+    <h2 style="color:#e65100">⚠️ LỊCH SỬ SỰ CỐ GẦN ĐÂY</h2>
+    <table>
+      <thead>
+        <tr><th>Ngày</th><th>Chuyền</th><th>Nhóm</th><th>Nguyên nhân</th><th>Bắt đầu</th><th>Kết thúc</th><th style="text-align:right">Thời gian</th><th>Ghi chú</th><th></th></tr>
+      </thead>
+      <tbody id="incident-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+async function init() {
+  document.getElementById('f-date').value = today();
+  document.getElementById('i-date').value = today();
+  await loadLines();
+  await loadStyles();
+  await loadReasons();
+  await loadRecent();
+  await loadIncidents();
+}
+
+async function loadLines() {
+  const data = await fetch(`${API}/api/lines`).then(r => r.json());
+  [document.getElementById('f-line'), document.getElementById('i-line')].forEach(sel => {
+    data.forEach(l => sel.innerHTML += `<option value="${l.line_code}">${l.line_name}</option>`);
+  });
+}
+
+async function loadStyles() {
+  const data = await fetch(`${API}/api/styles`).then(r => r.json());
+  const sel = document.getElementById('f-style');
+  data.forEach(s => sel.innerHTML += `<option value="${s.style_code}" data-buyer="${s.buyer}" data-type="${s.product_type}">${s.style_code} — ${s.buyer} / ${s.product_type}</option>`);
+}
+
+async function loadReasons() {
+  const data = await fetch(`${API}/api/reasons`).then(r => r.json());
+  const sel = document.getElementById('i-reason');
+  let group = '';
+  data.forEach(r => {
+    if (r.reason_group !== group) {
+      group = r.reason_group;
+      sel.innerHTML += `<optgroup label="── ${group} ──">`;
+    }
+    sel.innerHTML += `<option value="${r.reason_code}">${r.reason_name}</option>`;
+  });
+}
+
+async function loadLots() {
+  const sel = document.getElementById('f-style');
+  const sc = sel.value;
+  const opt = sel.options[sel.selectedIndex];
+  const lotSel = document.getElementById('f-lot');
+  const meta = document.getElementById('style-meta');
+  lotSel.innerHTML = '<option value="">-- Chọn lô --</option>';
+  document.getElementById('lot-info').textContent = '';
+  if (!sc) { meta.style.display = 'none'; return; }
+  meta.textContent = `Buyer: ${opt.dataset.buyer} | Loại: ${opt.dataset.type}`;
+  meta.style.display = 'block';
+  const data = await fetch(`${API}/api/lots/${sc}`).then(r => r.json());
+  if (!data.length) { lotSel.innerHTML = '<option value="">Chưa có lô cho style này</option>'; return; }
+  data.forEach(l => lotSel.innerHTML += `<option value="${l.lot_name}" data-start="${l.start_date}" data-end="${l.end_date||''}">${l.lot_name}</option>`);
+  lotSel.onchange = () => {
+    const o = lotSel.options[lotSel.selectedIndex];
+    if (o.dataset.start) document.getElementById('lot-info').textContent = `📅 ${o.dataset.start} → ${o.dataset.end||'...'}`;
+  };
+}
+
+function calcDuration() {
+  const s = document.getElementById('i-start').value;
+  const e = document.getElementById('i-end').value;
+  if (!s || !e) return;
+  const [sh,sm] = s.split(':').map(Number);
+  const [eh,em] = e.split(':').map(Number);
+  const startMins = sh*60+sm;
+  const endMins   = eh*60+em;
+  let mins = endMins - startMins;
+  if (mins <= 0) { document.getElementById('i-duration').value = '⚠️ Giờ không hợp lệ'; return; }
+
+  // Trừ giờ nghỉ trưa 11:30 - 12:30 (60 phút) nếu khoảng thời gian giao nhau
+  const breakStart = 11*60+30; // 690
+  const breakEnd   = 12*60+30; // 750
+  const overlapStart = Math.max(startMins, breakStart);
+  const overlapEnd   = Math.min(endMins,   breakEnd);
+  const overlap      = Math.max(0, overlapEnd - overlapStart);
+  mins -= overlap;
+
+  const h = Math.floor(mins/60), m = mins%60;
+  const note = overlap > 0 ? ` (đã trừ ${overlap}p nghỉ trưa)` : '';
+  document.getElementById('i-duration').value = h > 0 ? `${h} giờ ${m} phút${note}` : `${mins} phút${note}`;
+}
+
+// ─── PRODUCTION ──────────────────────────────────────────────
+async function submitProd() {
+  const date = document.getElementById('f-date').value;
+  const line_code = document.getElementById('f-line').value;
+  const style_code = document.getElementById('f-style').value;
+  const lot_name = document.getElementById('f-lot').value;
+  const output = document.getElementById('f-output').value;
+  if (!date||!line_code||!style_code||!lot_name||!output) { showAlert('alert-prod','⚠️ Vui lòng điền đầy đủ!','error'); return; }
+  const r = await fetch(`${API}/api/production`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,line_code,style_code,lot_name,output:parseInt(output)})});
+  const d = await r.json();
+  if (d.success) { showAlert('alert-prod',`✅ Đã lưu sản lượng! ID: #${d.id}`,'success'); document.getElementById('f-output').value=''; loadRecent(); }
+  else showAlert('alert-prod','❌ '+d.error,'error');
+}
+
+function resetProd() {
+  document.getElementById('f-date').value = today();
+  document.getElementById('f-line').value = '';
+  document.getElementById('f-style').value = '';
+  document.getElementById('f-lot').innerHTML = '<option value="">-- Chọn style trước --</option>';
+  document.getElementById('f-output').value = '';
+  document.getElementById('style-meta').style.display = 'none';
+  document.getElementById('lot-info').textContent = '';
+}
+
+async function loadRecent() {
+  const data = await fetch(`${API}/api/production/recent`).then(r => r.json());
+  const tbody = document.getElementById('recent-body');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">Chưa có dữ liệu</td></tr>'; return; }
+  tbody.innerHTML = data.map(d => `<tr>
+    <td>${d.date}</td>
+    <td>${d.line_name||d.line_code}</td>
+    <td><b>${d.style_code}</b><br><span class="badge">${d.buyer||''}</span> <span style="font-size:11px;color:#888">${d.product_type||''}</span></td>
+    <td>${d.lot_name}</td>
+    <td style="text-align:right"><b style="color:#1a237e;font-size:15px">${fmt(d.output)}</b></td>
+    <td><button class="btn-del" onclick="delProd(${d.id})">🗑</button></td>
+  </tr>`).join('');
+}
+
+async function delProd(id) {
+  if (!confirm('Xóa bản ghi này?')) return;
+  await fetch(`${API}/api/production/${id}`,{method:'DELETE'});
+  loadRecent();
+}
+
+// ─── INCIDENTS ───────────────────────────────────────────────
+async function submitIncident() {
+  const date = document.getElementById('i-date').value;
+  const line_code = document.getElementById('i-line').value;
+  const reason_code = document.getElementById('i-reason').value;
+  const time_start = document.getElementById('i-start').value;
+  const time_end = document.getElementById('i-end').value;
+  const note = document.getElementById('i-note').value;
+  if (!date||!line_code||!reason_code||!time_start||!time_end) { showAlert('alert-inc','⚠️ Vui lòng điền đầy đủ!','error'); return; }
+  const r = await fetch(`${API}/api/incidents`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,line_code,reason_code,time_start,time_end,note})});
+  const d = await r.json();
+  if (d.success) {
+    const mins = d.duration_minutes;
+    const h = Math.floor(mins/60), m = mins%60;
+    const dur = h > 0 ? `${h}g${m}p` : `${mins} phút`;
+    showAlert('alert-inc',`✅ Đã lưu sự cố! Thời gian: ${dur}`,'success');
+    resetIncident(); loadIncidents();
+  } else showAlert('alert-inc','❌ '+d.error,'error');
+}
+
+function resetIncident() {
+  document.getElementById('i-date').value = today();
+  document.getElementById('i-line').value = '';
+  document.getElementById('i-reason').value = '';
+  document.getElementById('i-start').value = '';
+  document.getElementById('i-end').value = '';
+  document.getElementById('i-duration').value = '';
+  document.getElementById('i-note').value = '';
+}
+
+async function loadIncidents() {
+  const data = await fetch(`${API}/api/incidents/recent`).then(r => r.json());
+  const tbody = document.getElementById('incident-body');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px">Chưa có sự cố nào</td></tr>'; return; }
+  tbody.innerHTML = data.map(d => {
+    const mins = d.duration_minutes;
+    const h = Math.floor(mins/60), m = mins%60;
+    const dur = h > 0 ? `${h}g ${m}p` : `${mins}p`;
+    return `<tr>
+      <td>${d.date}</td>
+      <td>${d.line_name||d.line_code}</td>
+      <td><span class="badge badge-inc">${d.reason_group||''}</span></td>
+      <td>${d.reason_name||d.reason_code}</td>
+      <td>${d.time_start}</td>
+      <td>${d.time_end}</td>
+      <td style="text-align:right"><b style="color:#e65100">${dur}</b></td>
+      <td style="font-size:12px;color:#888">${d.note||'—'}</td>
+      <td><button class="btn-del" onclick="delIncident(${d.id})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function delIncident(id) {
+  if (!confirm('Xóa sự cố này?')) return;
+  await fetch(`${API}/api/incidents/${id}`,{method:'DELETE'});
+  loadIncidents();
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = `alert ${type}`; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
+}
+
+init();
+</script>
+</body>
+</html>

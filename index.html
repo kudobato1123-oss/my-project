@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý Sản xuất</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; }
+
+  /* NAV */
+  nav { background: #1a237e; color: #fff; display: flex; align-items: center; gap: 0; padding: 0 24px; height: 52px; }
+  nav h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; flex: 1; }
+  nav button { background: none; border: none; color: #fff; padding: 14px 20px; cursor: pointer; font-size: 14px; font-weight: 500; opacity: 0.75; transition: opacity .2s; }
+  nav button.active, nav button:hover { opacity: 1; border-bottom: 3px solid #82b1ff; }
+
+  /* PAGES */
+  .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* CARD */
+  .card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+  .card h2 { font-size: 15px; font-weight: 700; color: #1a237e; margin-bottom: 18px; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 13px; font-weight: 600; color: #555; }
+  .form-group input, .form-group select {
+    border: 1.5px solid #ddd; border-radius: 7px; padding: 10px 12px;
+    font-size: 14px; transition: border .2s; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: #3949ab; }
+  .form-group .hint { font-size: 11px; color: #888; }
+
+  .btn-submit {
+    margin-top: 8px; background: #1a237e; color: #fff; border: none; border-radius: 8px;
+    padding: 12px 32px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s;
+  }
+  .btn-submit:hover { background: #3949ab; }
+
+  .alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; display: none; }
+  .alert.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .alert.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+
+  /* RECENT TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; font-weight: 700; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; }
+  tr:hover td { background: #f5f5f5; }
+  .btn-del { background: none; border: none; color: #c62828; cursor: pointer; font-size: 16px; }
+
+  /* DASHBOARD */
+  .dash-filters { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+  .dash-filters label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+  .dash-filters input { border: 1.5px solid #ddd; border-radius: 7px; padding: 8px 12px; font-size: 13px; }
+  .btn-filter { background: #3949ab; color: #fff; border: none; border-radius: 7px; padding: 9px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .report-grid .card.full { grid-column: 1 / -1; }
+
+  .stat-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .stat-box { flex: 1; background: #fff; border-radius: 10px; padding: 18px 20px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .stat-box .val { font-size: 28px; font-weight: 800; color: #1a237e; }
+  .stat-box .lbl { font-size: 12px; color: #888; margin-top: 4px; }
+
+  /* BAR CHART */
+  .bar-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .bar-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .bar-item .bar-label { width: 110px; text-align: right; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-item .bar-bg { flex: 1; background: #e8eaf6; border-radius: 4px; height: 22px; overflow: hidden; }
+  .bar-item .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 12px; color: #fff; font-weight: 600; transition: width .4s; }
+  .bar-item .bar-fill.blue { background: #3949ab; }
+  .bar-item .bar-fill.green { background: #2e7d32; }
+  .bar-item .bar-fill.orange { background: #e65100; }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>🏭 SẢN XUẤT</h1>
+  <button class="active" onclick="showPage('form')">📝 Nhập liệu</button>
+  <button onclick="showPage('dashboard')">📊 Dashboard</button>
+</nav>
+
+<!-- PAGE: FORM -->
+<div id="page-form" class="page active">
+  <div class="card">
+    <h2>NHẬP SẢN LƯỢNG</h2>
+    <div id="alert" class="alert"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Ngày sản xuất *</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-group">
+        <label>Chuyền *</label>
+        <select id="f-line"><option value="">-- Chọn chuyền --</option></select>
+      </div>
+      <div class="form-group">
+        <label>Style *</label>
+        <select id="f-style" onchange="loadLots()"><option value="">-- Chọn style --</option></select>
+      </div>
+      <div class="form-group">
+        <label>Lô sản xuất *</label>
+        <select id="f-lot"><option value="">-- Chọn style trước --</option></select>
+        <span class="hint" id="lot-info"></span>
+      </div>
+      <div class="form-group">
+        <label>Sản lượng (cái) *</label>
+        <input type="number" id="f-output" min="0" placeholder="Nhập số lượng">
+      </div>
+    </div>
+    <br>
+    <button class="btn-submit" onclick="submitForm()">💾 Lưu dữ liệu</button>
+  </div>
+
+  <div class="card">
+    <h2>LỊCH SỬ NHẬP GẦN ĐÂY</h2>
+    <table>
+      <thead><tr><th>Ngày</th><th>Chuyền</th><th>Style</th><th>Lô SX</th><th>Sản lượng</th><th></th></tr></thead>
+      <tbody id="recent-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAGE: DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <div class="dash-filters">
+    <div><label>Từ ngày</label><input type="date" id="d-from"></div>
+    <div><label>Đến ngày</label><input type="date" id="d-to"></div>
+    <button class="btn-filter" onclick="loadDashboard()">🔍 Xem báo cáo</button>
+    <button class="btn-filter" style="background:#546e7a" onclick="clearFilter()">Tất cả</button>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="val" id="stat-total">—</div><div class="lbl">Tổng sản lượng</div></div>
+    <div class="stat-box"><div class="val" id="stat-days">—</div><div class="lbl">Số ngày SX</div></div>
+    <div class="stat-box"><div class="val" id="stat-lines">—</div><div class="lbl">Số chuyền hoạt động</div></div>
+    <div class="stat-box"><div class="val" id="stat-styles">—</div><div class="lbl">Số style</div></div>
+  </div>
+
+  <div class="report-grid">
+    <div class="card full">
+      <h2>📅 TỔNG SẢN LƯỢNG THEO NGÀY</h2>
+      <div id="chart-date" class="bar-wrap"></div>
+    </div>
+    <div class="card">
+      <h2>🏭 SẢN LƯỢNG THEO CHUYỀN</h2>
+      <div id="chart-line" class="bar-wrap"></div>
+    </div>
+    <div class="card">
+      <h2>👕 SẢN LƯỢNG THEO STYLE</h2>
+      <div id="chart-style" class="bar-wrap"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📆 TỔNG SẢN LƯỢNG THEO THÁNG</h2>
+    <div id="chart-month" class="bar-wrap"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+// ─── UTILS ───────────────────────────────────────────────────
+function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+function today() {
+  const d = new Date(); return d.toISOString().split('T')[0];
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+async function init() {
+  document.getElementById('f-date').value = today();
+  await loadLines();
+  await loadStyles();
+  await loadRecent();
+}
+
+async function loadLines() {
+  const r = await fetch(`${API}/api/lines`);
+  const data = await r.json();
+  const sel = document.getElementById('f-line');
+  data.forEach(l => sel.innerHTML += `<option value="${l.line_code}">${l.line_name}</option>`);
+}
+
+async function loadStyles() {
+  const r = await fetch(`${API}/api/styles`);
+  const data = await r.json();
+  const sel = document.getElementById('f-style');
+  data.forEach(s => sel.innerHTML += `<option value="${s.style_code}">${s.style_code} — ${s.buyer} / ${s.product_type}</option>`);
+}
+
+async function loadLots() {
+  const sc = document.getElementById('f-style').value;
+  const sel = document.getElementById('f-lot');
+  sel.innerHTML = '<option value="">-- Chọn lô --</option>';
+  document.getElementById('lot-info').textContent = '';
+  if (!sc) return;
+  const r = await fetch(`${API}/api/lots/${sc}`);
+  const data = await r.json();
+  if (data.length === 0) {
+    sel.innerHTML = '<option value="">Chưa có lô cho style này</option>';
+    return;
+  }
+  data.forEach(l => {
+    sel.innerHTML += `<option value="${l.lot_name}" data-start="${l.start_date}" data-end="${l.end_date}">${l.lot_name}</option>`;
+  });
+  sel.onchange = () => {
+    const opt = sel.options[sel.selectedIndex];
+    const s = opt.dataset.start, e = opt.dataset.end;
+    if (s) document.getElementById('lot-info').textContent = `${s} → ${e || '...'}`;
+  };
+}
+
+async function loadRecent() {
+  const r = await fetch(`${API}/api/production/recent`);
+  const data = await r.json();
+  const tbody = document.getElementById('recent-body');
+  if (data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">Chưa có dữ liệu</td></tr>'; return; }
+  tbody.innerHTML = data.map(d => `
+    <tr>
+      <td>${d.date}</td>
+      <td>${d.line_name || d.line_code}</td>
+      <td><b>${d.style_code}</b><br><small style="color:#888">${d.buyer||''} / ${d.product_type||''}</small></td>
+      <td>${d.lot_name}</td>
+      <td><b style="color:#1a237e">${fmt(d.output)}</b></td>
+      <td><button class="btn-del" onclick="delRow(${d.id})">🗑</button></td>
+    </tr>
+  `).join('');
+}
+
+async function delRow(id) {
+  if (!confirm('Xóa bản ghi này?')) return;
+  await fetch(`${API}/api/production/${id}`, { method: 'DELETE' });
+  loadRecent();
+}
+
+async function submitForm() {
+  const date = document.getElementById('f-date').value;
+  const line_code = document.getElementById('f-line').value;
+  const style_code = document.getElementById('f-style').value;
+  const lot_name = document.getElementById('f-lot').value;
+  const output = document.getElementById('f-output').value;
+
+  if (!date || !line_code || !style_code || !lot_name || !output) {
+    showAlert('Vui lòng điền đầy đủ thông tin!', 'error'); return;
+  }
+
+  const r = await fetch(`${API}/api/production`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date, line_code, style_code, lot_name, output: parseInt(output) })
+  });
+  const data = await r.json();
+  if (data.success) {
+    showAlert(`✅ Đã lưu thành công! ID: #${data.id}`, 'success');
+    document.getElementById('f-output').value = '';
+    loadRecent();
+  } else {
+    showAlert('Lỗi: ' + data.error, 'error');
+  }
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = `alert ${type}`;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// ─── DASHBOARD ──────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+}
+
+function clearFilter() {
+  document.getElementById('d-from').value = '';
+  document.getElementById('d-to').value = '';
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  const from = document.getElementById('d-from').value;
+  const to = document.getElementById('d-to').value;
+  const q = (from && to) ? `?from=${from}&to=${to}` : '';
+
+  const [byDate, byMonth, byLine, byStyle] = await Promise.all([
+    fetch(`${API}/api/report/by-date${q}`).then(r => r.json()),
+    fetch(`${API}/api/report/by-month`).then(r => r.json()),
+    fetch(`${API}/api/report/by-line${q}`).then(r => r.json()),
+    fetch(`${API}/api/report/by-style${q}`).then(r => r.json()),
+  ]);
+
+  // Stats
+  const total = byDate.reduce((s, d) => s + d.total, 0);
+  document.getElementById('stat-total').textContent = fmt(total);
+  document.getElementById('stat-days').textContent = byDate.length;
+  document.getElementById('stat-lines').textContent = byLine.length;
+  document.getElementById('stat-styles').textContent = byStyle.length;
+
+  renderBars('chart-date', byDate, d => d.date, d => d.total, 'blue', 15);
+  renderBars('chart-month', byMonth, d => d.month, d => d.total, 'green');
+  renderBars('chart-line', byLine, d => d.line_name || d.line_code, d => d.total, 'blue');
+  renderBars('chart-style', byStyle, d => `${d.style_code}`, d => d.total, 'orange');
+}
+
+function renderBars(id, data, labelFn, valFn, color, limit = 999) {
+  const el = document.getElementById(id);
+  if (!data.length) { el.innerHTML = '<div style="color:#aaa;padding:20px;text-align:center">Chưa có dữ liệu</div>'; return; }
+  const max = Math.max(...data.map(valFn));
+  const rows = data.slice(0, limit);
+  el.innerHTML = rows.map(d => {
+    const pct = max ? Math.round(valFn(d) / max * 100) : 0;
+    return `<div class="bar-item">
+      <div class="bar-label">${labelFn(d)}</div>
+      <div class="bar-bg"><div class="bar-fill ${color}" style="width:${pct}%">${fmt(valFn(d))}</div></div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
