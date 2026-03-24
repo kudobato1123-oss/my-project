@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: qc_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qcadmin
+      POSTGRES_PASSWORD: ChangeThisStrongPassword123!
+      POSTGRES_DB: qcdb
+    volumes:
+      - /volume1/docker/qc-system/postgres:/var/lib/postgresql/data
+
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: qc_nocodb
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      NC_DB: "pg://postgres:5432?u=qcadmin&p=ChangeThisStrongPassword123!&d=qcdb"
+      NC_AUTH_JWT_SECRET: "replace-with-a-long-random-secret"
+    volumes:
+      - /volume1/docker/qc-system/nocodb:/usr/app/data
+    ports:
+      - "8100:8080"
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: qc_metabase
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: qcdb
+      MB_DB_PORT: 5432
+      MB_DB_USER: qcadmin
+      MB_DB_PASS: ChangeThisStrongPassword123!
+      MB_DB_HOST: postgres
+    volumes:
+      - /volume1/docker/qc-system/metabase:/metabase-data
+    ports:
+      - "3010:3000"
