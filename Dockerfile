@@ -1,12 +1,16 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
-WORKDIR /backend
+WORKDIR /app
 
-COPY backend/package*.json ./
-RUN npm install --production
+RUN apk add --no-cache python3 make g++
 
-COPY backend/ ./
-COPY frontend/ /frontend/
+COPY backend/package.json ./backend/
+RUN cd backend && npm install --production
+
+COPY backend/server.js ./backend/
+COPY frontend/ ./frontend/
+
+RUN mkdir -p /app/data
 
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "backend/server.js"]
